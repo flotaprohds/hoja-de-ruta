@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1B5E20">
+<title>FlotaPro · Hoja de Ruta</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --verde:       #1B5E20;
+    --verde-med:   #2E7D32;
+    --verde-claro: #4CAF50;
+    --verde-bg:    #E8F5E9;
+    --naranja:     #E65100;
+    --rojo:        #B71C1C;
+    --azul:        #1565C0;
+    --gris-bg:     #F5F5F5;
+    --gris-borde:  #E0E0E0;
+    --texto:       #212121;
+    --texto-sec:   #616161;
+    --blanco:      #FFFFFF;
+    --sombra:      0 2px 8px rgba(0,0,0,.12);
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--gris-bg);
+    color: var(--texto);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--verde);
+    color: white;
+    padding: 14px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  }
+  .app-header .logo { font-size: 13px; opacity: .75; letter-spacing: .5px; }
+  .app-header .vehiculo-nombre {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    margin: 2px 0 1px;
+  }
+  .app-header .vehiculo-info { font-size: 13px; opacity: .85; }
+
+  /* ── Screens ── */
+  .screen { display: none; padding: 16px; max-width: 480px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--blanco);
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    padding: 20px 18px;
+    margin-bottom: 14px;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--verde);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--verde-bg);
+  }
+
+  /* ── Form group ── */
+  .fg { margin-bottom: 18px; }
+  .fg label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--texto-sec);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 8px;
+  }
+  .fg input[type=number], .fg textarea, .fg select {
+    width: 100%;
+    border: 2px solid var(--gris-borde);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 16px;
+    color: var(--texto);
+    background: white;
+    outline: none;
+    transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  .fg input[type=number]:focus,
+  .fg textarea:focus,
+  .fg select:focus { border-color: var(--verde-claro); }
+  .fg input[type=number] { font-size: 24px; font-weight: 700; text-align: center; }
+  .fg textarea { resize: none; min-height: 72px; line-height: 1.4; }
+  .fg select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%23888'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  /* ── Selector de botones (combustible, estado) ── */
+  .btn-sel { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-sel button {
+    flex: 1;
+    min-width: 56px;
+    padding: 12px 8px;
+    border: 2px solid var(--gris-borde);
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-sec);
+    cursor: pointer;
+    transition: all .15s;
+    text-align: center;
+  }
+  .btn-sel button.selected {
+    border-color: var(--verde-med);
+    background: var(--verde-bg);
+    color: var(--verde-med);
+  }
+  .btn-sel button.sel-ok  { border-color: #388E3C; background: #E8F5E9; color: #1B5E20; }
+  .btn-sel button.sel-warn { border-color: #F57C00; background: #FFF3E0; color: #E65100; }
+  .btn-sel button.sel-bad  { border-color: #C62828; background: #FFEBEE; color: #B71C1C; }
+
+  /* ── Grilla novedades ── */
+  .novedad-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .novedad-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gris-bg);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all .15s;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .novedad-item input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--verde-med); flex-shrink: 0; }
+  .novedad-item:has(input:checked) { border-color: var(--verde-med); background: var(--verde-bg); }
+
+  /* ── Botones principales ── */
+  .btn-primary, .btn-warn-main, .btn-danger {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    margin-top: 4px;
+  }
+  .btn-primary   { background: var(--verde-med); color: white; }
+  .btn-warn-main { background: var(--naranja); color: white; }
+  .btn-danger    { background: var(--rojo); color: white; }
+  .btn-secondary {
+    width: 100%;
+    padding: 13px;
+    border: 2px solid var(--gris-borde);
+    border-radius: 10px;
+    background: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--texto-sec);
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .btn-primary:active, .btn-warn-main:active, .btn-danger:active { opacity: .85; transform: scale(.98); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── Loading ── */
+  #screen-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+    padding: 40px 20px;
+  }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 5px solid var(--verde-bg);
+    border-top-color: var(--verde-med);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-txt { color: var(--texto-sec); font-size: 15px; }
+
+  /* ── Error ── */
+  #screen-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    gap: 12px;
+    padding: 40px 20px;
+  }
+  .error-icon { font-size: 56px; }
+  .error-msg  { color: var(--texto-sec); font-size: 15px; line-height: 1.5; }
+
+  /* ── Success ── */
+  #screen-ok {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    gap: 10px;
+    padding: 40px 20px;
+  }
+  .ok-icon   { font-size: 72px; margin-bottom: 8px; }
+  .ok-titulo { font-size: 24px; font-weight: 700; color: var(--verde-med); }
+  .ok-detalle { color: var(--texto-sec); font-size: 15px; line-height: 1.5; }
+
+  /* ── Badge resumen en pantalla de viaje ── */
+  .viaje-resumen {
+    background: var(--verde-bg);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .viaje-resumen .vr-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .viaje-resumen .vr-row:last-child { margin-bottom: 0; }
+  .viaje-resumen .vr-label { font-size: 12px; color: var(--texto-sec); font-weight: 600; text-transform: uppercase; }
+  .viaje-resumen .vr-val   { font-size: 13px; font-weight: 700; color: var(--verde-med); }
+
+  /* ── Step indicator ── */
+  .step-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .step { flex: 1; height: 4px; border-radius: 2px; background: var(--gris-borde); }
+  .step.done { background: var(--verde-claro); }
+  .step.active { background: var(--verde-med); }
+
+  /* ── Texto de ayuda ── */
+  .hint { font-size: 12px; color: var(--texto-sec); margin-top: 6px; }
+  .required-star { color: var(--rojo); }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER (siempre visible) ── -->
+<div class="app-header">
+  <div class="logo">ZAVECOM · FlotaPro</div>
+  <div class="vehiculo-nombre" id="hdr-nombre">Cargando…</div>
+  <div class="vehiculo-info"   id="hdr-info"></div>
+</div>
+
+<!-- ── PANTALLA: Loading ── -->
+<div id="screen-loading" class="active">
+  <div class="spinner"></div>
+  <div class="loading-txt">Cargando información del vehículo…</div>
+</div>
+
+<!-- ── PANTALLA: Error ── -->
+<div id="screen-error" class="screen">
+  <div class="error-icon">⚠️</div>
+  <h2 style="color:#B71C1C; margin-bottom:4px;">Vehículo no encontrado</h2>
+  <div class="error-msg" id="error-msg">
+    El QR escaneado no corresponde a ningún vehículo activo.<br>
+    Avisá al responsable de flota.
+  </div>
+</div>
+
+<!-- ── PANTALLA: Salida ── -->
+<div id="screen-salida" class="screen">
+  <div class="step-bar">
+    <div class="step active" id="step1"></div>
+    <div class="step"        id="step2"></div>
+    <div class="step"        id="step3"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚦 Inicio de viaje</div>
+
+    <div class="fg">
+      <label>Tu nombre <span class="required-star">*</span></label>
+      <select id="sel-conductor">
+        <option value="">— Seleccioná tu nombre —</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Recorrido / Destino</label>
+      <input type="text" id="txt-recorrido" placeholder="Ej: Rosario – San Lorenzo" style="width:100%;border:2px solid var(--gris-borde);border-radius:8px;padding:12px 14px;font-size:15px;outline:none;">
+    </div>
+
+    <div class="fg">
+      <label>KM actual del vehículo <span class="required-star">*</span></label>
+      <input type="number" id="num-km-salida" inputmode="numeric" placeholder="0" min="0" max="9999999">
+    </div>
+
+    <div class="fg">
+      <label>Nivel de combustible</label>
+      <div class="btn-sel" id="bsel-comb-sal">
+        <button data-val="vacio">Vacío</button>
+        <button data-val="un_cuarto">¼</button>
+        <button data-val="mitad">½</button>
+        <button data-val="tres_cuartos">¾</button>
+        <button data-val="lleno">Lleno</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Estado general del vehículo</label>
+      <div class="btn-sel" id="bsel-estado-sal">
+        <button data-val="bueno">✓ Bueno</button>
+        <button data-val="regular">⚠ Regular</button>
+        <button data-val="malo">✗ Malo</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Observaciones (opcional)</label>
+      <textarea id="txt-obs-sal" placeholder="Describí cualquier situación relevante al salir…"></textarea>
+    </div>
+
+    <button class="btn-primary" id="btn-iniciar" onclick="iniciarViaje()">
+      ✓ INICIAR VIAJE
+    </button>
+    <div class="hint" style="text-align:center; margin-top:10px;">
+      La hora de salida se registra automáticamente.
+    </div>
+  </div>
+</div>
+
+<!-- ── PANTALLA: En viaje ── -->
+<div id="screen-viaje" class="screen">
+  <div class="step-bar">
+    <div class="step done"></div>
+    <div class="step active"></div>
+    <div class="step"></div>
+  </div>
+
+  <div class="card">
+    <div class="viaje-resumen">
+      <div class="vr-row">
+        <span class="vr-label">Conductor</span>
+        <span class="vr-val" id="vj-conductor"></span>
+      </div>
+      <div class="vr-row">
+        <span class="vr-label">Salida</span>
+        <span class="vr-val" id="vj-hora-sal"></span>
+      </div>
+      <div class="vr-row">
+        <span class="vr-label">KM salida</span>
+        <span class="vr-val" id="vj-km-sal"></span>
+      </div>
+    </div>
+
+    <button class="btn-primary" style="margin-bottom:10px;" onclick="irALlegada()">
+      📍 REGISTRAR LLEGADA
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚠️ Reportar novedad</div>
+    <p style="font-size:13px; color:var(--texto-sec); margin-bottom:14px;">
+      Tocá los problemas que encontraste durante el viaje:
+    </p>
+
+    <div class="novedad-grid">
+      <label class="novedad-item"><input type="checkbox" name="nov" value="luces"> 💡 Luces</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="aire"> 💨 Pérdida de aire</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="electrico"> ⚡ Eléctrico</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="neumatico"> 🛞 Neumático</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="frenos"> 🛑 Frenos</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="rotura"> 🔧 Rotura</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="carroceria"> 🚛 Carrocería</label>
+      <label class="novedad-item"><input type="checkbox" name="nov" value="otro"> ❓ Otro</label>
+    </div>
+
+    <div class="fg" style="margin-top:14px;">
+      <label>Gravedad</label>
+      <div class="btn-sel" id="bsel-gravedad">
+        <button data-val="baja" class="selected">Baja</button>
+        <button data-val="media">Media</button>
+        <button data-val="alta">Alta</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Descripción (opcional)</label>
+      <textarea id="txt-nov-desc" placeholder="Contá más detalles sobre el problema…"></textarea>
+    </div>
+
+    <button class="btn-warn-main" id="btn-reportar" onclick="reportarNovedad()">
+      ⚠ REPORTAR NOVEDAD
+    </button>
+  </div>
+</div>
+
+<!-- ── PANTALLA: Llegada ── -->
+<div id="screen-llegada" class="screen">
+  <div class="step-bar">
+    <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step active"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏁 Llegada y cierre de viaje</div>
+
+    <div class="viaje-resumen" style="margin-bottom:18px;">
+      <div class="vr-row">
+        <span class="vr-label">KM salida</span>
+        <span class="vr-val" id="lle-km-sal">—</span>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>KM actual al llegar <span class="required-star">*</span></label>
+      <input type="number" id="num-km-llegada" inputmode="numeric" placeholder="0" min="0" max="9999999">
+      <div class="hint" id="hint-km-llegada"></div>
+    </div>
+
+    <div class="fg">
+      <label>Nivel de combustible al llegar</label>
+      <div class="btn-sel" id="bsel-comb-lle">
+        <button data-val="vacio">Vacío</button>
+        <button data-val="un_cuarto">¼</button>
+        <button data-val="mitad">½</button>
+        <button data-val="tres_cuartos">¾</button>
+        <button data-val="lleno">Lleno</button>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>Observaciones finales (opcional)</label>
+      <textarea id="txt-obs-lle" placeholder="¿Hubo algún inconveniente durante el viaje?"></textarea>
+    </div>
+
+    <button class="btn-danger" id="btn-cerrar" onclick="cerrarViaje()">
+      🏁 CERRAR VIAJE
+    </button>
+    <button class="btn-secondary" onclick="irAViaje()">
+      ← Volver (reportar novedad)
+    </button>
+  </div>
+</div>
+
+<!-- ── PANTALLA: Éxito ── -->
+<div id="screen-ok" class="screen">
+  <div class="ok-icon" id="ok-icon">✅</div>
+  <div class="ok-titulo" id="ok-titulo">¡Viaje registrado!</div>
+  <div class="ok-detalle" id="ok-detalle"></div>
+  <button class="btn-secondary" style="max-width:280px; margin-top:24px;" onclick="reiniciar()">
+    Nueva inspección
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<script>
+// ── Configuración Supabase ──────────────────────────────────────────────────
+const SUPA_URL  = "https://lyhytefwaocakwigwngi.supabase.co";
+const SUPA_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5aHl0ZWZ3YW9jYWt3aWd3bmdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjcyNzAsImV4cCI6MjA5NTA0MzI3MH0.BDxZLuDQg18Uu_yjBvtz-UVOEAKjfx6hcUTZnuDon1Y";
+const EDGE_CIERRE = `${SUPA_URL}/functions/v1/inspeccion-cierre`;
+
+// Estado en memoria
+let vehiculo   = null;   // { id, numero_movil, marca, modelo, dominio }
+let inspId     = null;   // UUID de la inspección abierta
+let kmSalidaVal = null;  // para mostrar hint en llegada
+
+// ── Utilidades ─────────────────────────────────────────────────────────────
+
+const FLEX_SCREENS = new Set(["screen-loading", "screen-error", "screen-ok"]);
+
+function mostrar(id) {
+  document.querySelectorAll(".screen, #screen-loading").forEach(s => {
+    s.classList.remove("active");
+    s.style.display = "none";
+  });
+  const el = document.getElementById(id);
+  if (el) { el.classList.add("active"); el.style.display = FLEX_SCREENS.has(id) ? "flex" : "block"; }
+}
+
+function rpc(fn, params = {}) {
+  return fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "apikey":        SUPA_ANON,
+      "Authorization": `Bearer ${SUPA_ANON}`,
+    },
+    body: JSON.stringify(params),
+  }).then(r => r.json());
+}
+
+async function rpcVoid(fn, params = {}) {
+  const r = await fetch(`${SUPA_URL}/rest/v1/rpc/${fn}`, {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "apikey":        SUPA_ANON,
+      "Authorization": `Bearer ${SUPA_ANON}`,
+    },
+    body: JSON.stringify(params),
+  });
+  if (!r.ok) {
+    const txt = await r.text().catch(() => `HTTP ${r.status}`);
+    throw new Error(txt);
+  }
+}
+
+// Selector de botones (combustible, estado, gravedad)
+function initBtnSel(containerId, onChange) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  cont.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      cont.querySelectorAll("button").forEach(b => {
+        b.classList.remove("selected", "sel-ok", "sel-warn", "sel-bad");
+      });
+      btn.classList.add("selected");
+      if (btn.dataset.val === "bueno")   btn.classList.add("sel-ok");
+      if (btn.dataset.val === "regular") btn.classList.add("sel-warn");
+      if (btn.dataset.val === "malo")    btn.classList.add("sel-bad");
+      if (onChange) onChange(btn.dataset.val);
+    });
+  });
+}
+
+function getSelVal(containerId) {
+  const btn = document.querySelector(`#${containerId} button.selected`);
+  return btn ? btn.dataset.val : null;
+}
+
+function setSelVal(containerId, val) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  cont.querySelectorAll("button").forEach(btn => {
+    btn.classList.remove("selected", "sel-ok", "sel-warn", "sel-bad");
+    if (btn.dataset.val === val) {
+      btn.classList.add("selected");
+      if (val === "bueno")   btn.classList.add("sel-ok");
+      if (val === "regular") btn.classList.add("sel-warn");
+      if (val === "malo")    btn.classList.add("sel-bad");
+    }
+  });
+}
+
+function lsKey(suffix) { return vehiculo ? `fp_${vehiculo.id}_${suffix}` : null; }
+
+// ── Inicialización ──────────────────────────────────────────────────────────
+
+async function init() {
+  const params  = new URLSearchParams(location.search);
+  const dominio = (params.get("v") || "").trim().toUpperCase();
+
+  if (!dominio) {
+    document.getElementById("error-msg").textContent =
+      "No se especificó un vehículo. Escaneá el QR del camión.";
+    mostrar("screen-error");
+    return;
+  }
+
+  // 1. Buscar vehículo
+  let veh;
+  try {
+    veh = await rpc("obtener_vehiculo_publico", { p_dominio: dominio });
+  } catch (e) {
+    document.getElementById("error-msg").textContent = "Sin conexión a internet. Verificá tu señal e intentá de nuevo.";
+    mostrar("screen-error");
+    return;
+  }
+
+  if (!veh || !veh.id) {
+    document.getElementById("error-msg").innerHTML =
+      `El dominio <b>${dominio}</b> no está registrado en FlotaPro o el vehículo fue dado de baja.<br><br>Avisá al responsable de flota.`;
+    mostrar("screen-error");
+    return;
+  }
+  vehiculo = veh;
+
+  // Actualizar header
+  const nroMovil = vehiculo.numero_movil ? `CAMIÓN ${vehiculo.numero_movil}` : vehiculo.dominio;
+  document.getElementById("hdr-nombre").textContent = nroMovil;
+  document.getElementById("hdr-info").textContent   =
+    `${vehiculo.marca || ""} ${vehiculo.modelo || ""} · ${vehiculo.dominio}`.trim();
+  document.title = `FlotaPro · ${nroMovil}`;
+
+  // 2. Cargar conductores
+  try {
+    const conductores = await rpc("listar_conductores_publico", {});
+    const sel = document.getElementById("sel-conductor");
+    (Array.isArray(conductores) ? conductores : []).forEach(c => {
+      const opt = document.createElement("option");
+      opt.value       = c.id;
+      opt.textContent = c.nombre;
+      sel.appendChild(opt);
+    });
+  } catch (e) { /* no-op — formulario igual funciona sin conductores */ }
+
+  // 3. Revisar inspección abierta guardada
+  const savedId = localStorage.getItem(lsKey("insp"));
+  if (savedId) {
+    inspId = savedId;
+    const savedCond = localStorage.getItem(lsKey("conductor")) || "";
+    const savedHora = localStorage.getItem(lsKey("hora_sal"))  || "";
+    const savedKm   = localStorage.getItem(lsKey("km_sal"))    || "";
+    kmSalidaVal = savedKm ? parseInt(savedKm) : null;
+
+    document.getElementById("vj-conductor").textContent = savedCond;
+    document.getElementById("vj-hora-sal").textContent  = savedHora;
+    document.getElementById("vj-km-sal").textContent    = savedKm ? `${parseInt(savedKm).toLocaleString("es-AR")} km` : "—";
+    document.getElementById("lle-km-sal").textContent   = savedKm ? `${parseInt(savedKm).toLocaleString("es-AR")} km` : "—";
+
+    mostrar("screen-viaje");
+    return;
+  }
+
+  // 4. Sin inspección abierta: mostrar formulario de salida
+  initBtnSel("bsel-comb-sal");
+  initBtnSel("bsel-estado-sal");
+  initBtnSel("bsel-gravedad");
+  mostrar("screen-salida");
+}
+
+// ── Iniciar viaje ────────────────────────────────────────────────────────────
+
+async function iniciarViaje() {
+  const selCond = document.getElementById("sel-conductor");
+  const conductorId     = selCond.value;
+  const conductorNombre = selCond.options[selCond.selectedIndex]?.text || "";
+  const kmSalidaRaw = document.getElementById("num-km-salida").value.trim();
+  const kmSalida    = kmSalidaRaw ? parseInt(kmSalidaRaw) : null;
+
+  if (!conductorId) { alert("Por favor seleccioná tu nombre."); return; }
+  if (!kmSalidaRaw || isNaN(kmSalida) || kmSalida < 0) {
+    alert("Por favor ingresá el kilómetro actual del vehículo."); return;
+  }
+
+  const btn = document.getElementById("btn-iniciar");
+  btn.disabled = true;
+  btn.textContent = "Guardando…";
+
+  try {
+    const nuevoId = await rpc("iniciar_inspeccion", {
+      p_vehiculo_id:          vehiculo.id,
+      p_conductor_id:         conductorId || null,
+      p_conductor_nombre:     conductorNombre,
+      p_recorrido:            document.getElementById("txt-recorrido").value.trim() || null,
+      p_km_salida:            kmSalida,
+      p_combustible_salida:   getSelVal("bsel-comb-sal"),
+      p_estado_salida:        getSelVal("bsel-estado-sal"),
+      p_observaciones_salida: document.getElementById("txt-obs-sal").value.trim() || null,
+    });
+
+    if (!nuevoId || typeof nuevoId !== "string") throw new Error("No se recibió ID de la inspección.");
+
+    inspId      = nuevoId;
+    kmSalidaVal = kmSalida;
+
+    // Guardar en localStorage para la pantalla de llegada
+    localStorage.setItem(lsKey("insp"),       nuevoId);
+    localStorage.setItem(lsKey("conductor"),  conductorNombre);
+    localStorage.setItem(lsKey("hora_sal"),   new Date().toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }));
+    localStorage.setItem(lsKey("km_sal"),     String(kmSalida));
+
+    // Ir a pantalla de viaje
+    document.getElementById("vj-conductor").textContent = conductorNombre;
+    document.getElementById("vj-hora-sal").textContent  = localStorage.getItem(lsKey("hora_sal"));
+    document.getElementById("vj-km-sal").textContent    = `${kmSalida.toLocaleString("es-AR")} km`;
+    document.getElementById("lle-km-sal").textContent   = `${kmSalida.toLocaleString("es-AR")} km`;
+    initBtnSel("bsel-gravedad");
+
+    mostrar("screen-viaje");
+
+  } catch (e) {
+    alert("Error al guardar: " + (e.message || "Sin conexión. Verificá tu señal."));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✓ INICIAR VIAJE";
+  }
+}
+
+// ── Reportar novedad ─────────────────────────────────────────────────────────
+
+async function reportarNovedad() {
+  if (!inspId) { alert("No hay viaje activo."); return; }
+
+  const checks   = [...document.querySelectorAll("input[name=nov]:checked")];
+  const gravedad = getSelVal("bsel-gravedad") || "baja";
+  const desc     = document.getElementById("txt-nov-desc").value.trim();
+
+  if (!checks.length) { alert("Seleccioná al menos un tipo de novedad."); return; }
+
+  const btn = document.getElementById("btn-reportar");
+  btn.disabled = true;
+  btn.textContent = "Enviando…";
+
+  let errores = 0;
+  for (const chk of checks) {
+    try {
+      await rpcVoid("reportar_novedad", {
+        p_inspeccion_id: inspId,
+        p_tipo:          chk.value,
+        p_descripcion:   desc || null,
+        p_gravedad:      gravedad,
+      });
+    } catch { errores++; }
+  }
+
+  btn.disabled = false;
+  btn.textContent = "⚠ REPORTAR NOVEDAD";
+
+  if (errores) {
+    alert("Algunas novedades no se guardaron. Verificá tu conexión.");
+  } else {
+    // Limpiar selección
+    document.querySelectorAll("input[name=nov]").forEach(c => c.checked = false);
+    document.getElementById("txt-nov-desc").value = "";
+    setSelVal("bsel-gravedad", "baja");
+    alert(`✓ ${checks.length} novedad${checks.length > 1 ? "es" : ""} reportada${checks.length > 1 ? "s" : ""}.`);
+  }
+}
+
+// ── Cerrar viaje ─────────────────────────────────────────────────────────────
+
+async function cerrarViaje() {
+  if (!inspId) { alert("No hay viaje activo."); return; }
+
+  const kmLlegadaRaw = document.getElementById("num-km-llegada").value.trim();
+  const kmLlegada    = kmLlegadaRaw ? parseInt(kmLlegadaRaw) : null;
+
+  if (!kmLlegadaRaw || isNaN(kmLlegada) || kmLlegada < 0) {
+    alert("Por favor ingresá el kilómetro actual al llegar."); return;
+  }
+  if (kmSalidaVal !== null && kmLlegada < kmSalidaVal) {
+    alert(`El km de llegada (${kmLlegada.toLocaleString()}) no puede ser menor al de salida (${kmSalidaVal.toLocaleString()}).`);
+    return;
+  }
+
+  const btn = document.getElementById("btn-cerrar");
+  btn.disabled = true;
+  btn.textContent = "Cerrando viaje…";
+
+  try {
+    const resp = await fetch(EDGE_CIERRE, {
+      method: "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${SUPA_ANON}`,
+        "apikey":        SUPA_ANON,
+      },
+      body: JSON.stringify({
+        inspeccion_id:         inspId,
+        km_llegada:            kmLlegada,
+        combustible_llegada:   getSelVal("bsel-comb-lle"),
+        observaciones_llegada: document.getElementById("txt-obs-lle").value.trim() || null,
+      }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok || !data.ok) throw new Error(data.error || "Error del servidor.");
+
+    // Limpiar localStorage
+    localStorage.removeItem(lsKey("insp"));
+    localStorage.removeItem(lsKey("conductor"));
+    localStorage.removeItem(lsKey("hora_sal"));
+    localStorage.removeItem(lsKey("km_sal"));
+
+    const kmTotal = kmSalidaVal !== null ? (kmLlegada - kmSalidaVal).toLocaleString("es-AR") : "—";
+    document.getElementById("ok-icon").textContent    = "🏁";
+    document.getElementById("ok-titulo").textContent  = "¡Viaje cerrado!";
+    document.getElementById("ok-detalle").innerHTML   =
+      `<b>${kmTotal} km</b> recorridos<br>` +
+      `Odómetro actualizado: ${data.odometro_ok ? "✓" : "⚠ pendiente"}<br><br>` +
+      "Tu hoja de ruta quedó registrada en FlotaPro.";
+    mostrar("screen-ok");
+
+  } catch (e) {
+    alert("Error al cerrar el viaje: " + (e.message || "Sin conexión."));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🏁 CERRAR VIAJE";
+  }
+}
+
+// ── Navegación entre pantallas ───────────────────────────────────────────────
+
+function irAViaje() {
+  initBtnSel("bsel-gravedad");
+  mostrar("screen-viaje");
+}
+
+function irALlegada() {
+  if (kmSalidaVal !== null) {
+    document.getElementById("hint-km-llegada").textContent =
+      `KM salida: ${kmSalidaVal.toLocaleString("es-AR")}`;
+  }
+  initBtnSel("bsel-comb-lle");
+  mostrar("screen-llegada");
+}
+
+function reiniciar() {
+  inspId = null;
+  kmSalidaVal = null;
+  initBtnSel("bsel-comb-sal");
+  initBtnSel("bsel-estado-sal");
+  initBtnSel("bsel-gravedad");
+  document.getElementById("sel-conductor").selectedIndex = 0;
+  document.getElementById("txt-recorrido").value = "";
+  document.getElementById("num-km-salida").value = "";
+  document.getElementById("txt-obs-sal").value   = "";
+  mostrar("screen-salida");
+}
+
+// ── Arrancar ─────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
