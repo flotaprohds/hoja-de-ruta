@@ -278,8 +278,8 @@
 
 <!-- ── PANTALLA: Error ── -->
 <div id="screen-error" class="screen">
-  <div class="error-icon">⚠️</div>
-  <h2 style="color:#B71C1C; margin-bottom:4px;">Vehículo no encontrado</h2>
+  <div class="error-icon" id="error-icon">⚠️</div>
+  <h2 id="error-titulo" style="color:#B71C1C; margin-bottom:4px;">Vehículo no encontrado</h2>
   <div class="error-msg" id="error-msg">
     El QR escaneado no corresponde a ningún vehículo activo.<br>
     Avisá al responsable de flota.
@@ -636,7 +636,21 @@ async function init() {
     return;
   }
 
-  // 4. KM inicial automático desde el cierre del viaje anterior
+  // 4. Verificar si el vehículo ya tiene un viaje abierto en otro dispositivo
+  try {
+    const hayAbierta = await rpc("verificar_inspeccion_abierta_publico", { p_vehiculo_id: vehiculo.id });
+    if (hayAbierta === true) {
+      document.getElementById("error-icon").textContent  = "🔒";
+      document.getElementById("error-titulo").textContent = "Vehículo no disponible";
+      document.getElementById("error-msg").innerHTML =
+        "Este vehículo ya tiene un viaje en curso.<br><br>" +
+        "Comunicate con el administrador.";
+      mostrar("screen-error");
+      return;
+    }
+  } catch (e) { /* si falla la verificación, continuar normalmente */ }
+
+  // 5. KM inicial automático desde el cierre del viaje anterior
   try {
     const kmInicial = await rpc("obtener_km_inicial_publico", { p_vehiculo_id: vehiculo.id });
     const campoKm   = document.getElementById("num-km-salida");
