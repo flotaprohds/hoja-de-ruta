@@ -312,6 +312,9 @@
     <div class="fg">
       <label>KM actual del vehículo <span class="required-star">*</span></label>
       <input type="number" id="num-km-salida" inputmode="numeric" placeholder="0" min="0" max="9999999">
+      <p id="hint-km-auto" style="display:none; margin:6px 0 0; font-size:13px; color:#2E7D32;">
+        🔒 KM tomado del cierre del viaje anterior
+      </p>
     </div>
 
     <div class="fg">
@@ -633,7 +636,21 @@ async function init() {
     return;
   }
 
-  // 4. Sin inspección abierta: mostrar formulario de salida
+  // 4. KM inicial automático desde el cierre del viaje anterior
+  try {
+    const kmInicial = await rpc("obtener_km_inicial_publico", { p_vehiculo_id: vehiculo.id });
+    const campoKm   = document.getElementById("num-km-salida");
+    const hintKm    = document.getElementById("hint-km-auto");
+    if (kmInicial !== null && typeof kmInicial === "number") {
+      campoKm.value           = kmInicial;
+      campoKm.readOnly        = true;
+      campoKm.style.background = "#F1F8E9";
+      campoKm.style.color      = "#2E7D32";
+      hintKm.style.display     = "block";
+    }
+  } catch (e) { /* sin lecturas previas — chofer ingresa manualmente */ }
+
+  // 5. Sin inspección abierta: mostrar formulario de salida
   initBtnSel("bsel-comb-sal");
   initBtnSel("bsel-estado-sal");
   initBtnSel("bsel-gravedad");
@@ -818,16 +835,8 @@ function irALlegada() {
 }
 
 function reiniciar() {
-  inspId = null;
-  kmSalidaVal = null;
-  initBtnSel("bsel-comb-sal");
-  initBtnSel("bsel-estado-sal");
-  initBtnSel("bsel-gravedad");
-  document.getElementById("sel-conductor").selectedIndex = 0;
-  document.getElementById("txt-recorrido").value = "";
-  document.getElementById("num-km-salida").value = "";
-  document.getElementById("txt-obs-sal").value   = "";
-  mostrar("screen-salida");
+  // Recargar la página para que init() busque el nuevo KM inicial automáticamente
+  window.location.reload();
 }
 
 // ── Arrancar ─────────────────────────────────────────────────────────────────
