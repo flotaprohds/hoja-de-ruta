@@ -612,6 +612,14 @@ function setSelVal(containerId, val) {
 
 function lsKey(suffix) { return vehiculo ? `fp_${vehiculo.id}_${suffix}` : null; }
 
+// Borra del celular el viaje en curso de este vehículo.
+function limpiarViajeGuardado() {
+  ["insp", "conductor", "hora_sal", "km_sal"].forEach(k => {
+    const key = lsKey(k);
+    if (key) localStorage.removeItem(key);
+  });
+}
+
 // ── Inicialización ──────────────────────────────────────────────────────────
 
 async function init() {
@@ -665,19 +673,41 @@ async function init() {
   // 3. Revisar inspección abierta guardada
   const savedId = localStorage.getItem(lsKey("insp"));
   if (savedId) {
-    inspId = savedId;
-    const savedCond = localStorage.getItem(lsKey("conductor")) || "";
-    const savedHora = localStorage.getItem(lsKey("hora_sal"))  || "";
-    const savedKm   = localStorage.getItem(lsKey("km_sal"))    || "";
-    kmSalidaVal = savedKm ? parseInt(savedKm) : null;
+    // Antes de retomarlo, preguntar al servidor si ese viaje sigue abierto.
+    // Sin esta comprobación el celular resucita viajes ya cerrados —porque el
+    // cierre se registró pero su respuesta no llegó, o porque un administrador
+    // lo cerró a mano desde el escritorio— y el chofer queda encerrado: retoma
+    // un viaje muerto y cerrarlo falla siempre con "ya fue cerrada".
+    let sigueAbierto = true;
+    try {
+      sigueAbierto = (await rpc("verificar_inspeccion_abierta_publico",
+                                { p_vehiculo_id: vehiculo.id })) === true;
+    } catch (e) {
+      // Sin señal no se puede confirmar: se respeta lo guardado para no dejar
+      // al chofer sin poder cerrar un viaje que sí está abierto.
+      sigueAbierto = true;
+    }
 
-    document.getElementById("vj-conductor").textContent = savedCond;
-    document.getElementById("vj-hora-sal").textContent  = savedHora;
-    document.getElementById("vj-km-sal").textContent    = savedKm ? `${parseInt(savedKm).toLocaleString("es-AR")} km` : "—";
-    document.getElementById("lle-km-sal").textContent   = savedKm ? `${parseInt(savedKm).toLocaleString("es-AR")} km` : "—";
+    if (sigueAbierto) {
+      inspId = savedId;
+      const savedCond = localStorage.getItem(lsKey("conductor")) || "";
+      const savedHora = localStorage.getItem(lsKey("hora_sal"))  || "";
+      const savedKm   = localStorage.getItem(lsKey("km_sal"))    || "";
+      kmSalidaVal = savedKm ? parseInt(savedKm) : null;
 
-    mostrar("screen-viaje");
-    return;
+      document.getElementById("vj-conductor").textContent = savedCond;
+      document.getElementById("vj-hora-sal").textContent  = savedHora;
+      document.getElementById("vj-km-sal").textContent    = savedKm ? `${parseInt(savedKm).toLocaleString("es-AR")} km` : "—";
+      document.getElementById("lle-km-sal").textContent   = savedKm ? `${parseInt(savedKm).toLocaleString("es-AR")} km` : "—";
+
+      mostrar("screen-viaje");
+      return;
+    }
+
+    // Quedó obsoleto: descartarlo y arrancar un viaje nuevo con normalidad.
+    limpiarViajeGuardado();
+    inspId = null;
+    kmSalidaVal = null;
   }
 
   // 4. Verificar si el vehículo ya tiene un viaje abierto en otro dispositivo
@@ -941,21 +971,28 @@ async function cerrarViaje() {
     });
 
     const data = await resp.json();
-    if (!resp.ok || !data.ok) throw new Error(data.error || "Error del servidor.");
 
-    // Limpiar localStorage
-    localStorage.removeItem(lsKey("insp"));
-    localStorage.removeItem(lsKey("conductor"));
-    localStorage.removeItem(lsKey("hora_sal"));
-    localStorage.removeItem(lsKey("km_sal"));
+    // Si el servidor dice que ya estaba cerrada, el viaje SÍ quedó registrado:
+    // pasó en un intento anterior cuya respuesta no llegó (señal cortada, doble
+    // toque). Se trata como éxito. Si no, el chofer queda atrapado reintentando
+    // sobre un viaje que en realidad ya está guardado, y puede terminar
+    // iniciando uno duplicado.
+    const yaCerrada = !data.ok && /ya fue cerrada/i.test(data.error || "");
+
+    if (!resp.ok && !yaCerrada) throw new Error(data.error || "Error del servidor.");
+    if (!data.ok && !yaCerrada) throw new Error(data.error || "Error del servidor.");
+
+    limpiarViajeGuardado();
 
     const kmTotal = kmSalidaVal !== null ? (kmLlegada - kmSalidaVal).toLocaleString("es-AR") : "—";
     document.getElementById("ok-icon").textContent    = "🏁";
     document.getElementById("ok-titulo").textContent  = "¡Viaje cerrado!";
-    document.getElementById("ok-detalle").innerHTML   =
-      `<b>${kmTotal} km</b> recorridos<br>` +
-      `Odómetro actualizado: ${data.odometro_ok ? "✓" : "⚠ pendiente"}<br><br>` +
-      "Tu hoja de ruta quedó registrada en FlotaPro.";
+    document.getElementById("ok-detalle").innerHTML   = yaCerrada
+      ? "Este viaje ya estaba registrado en FlotaPro.<br>" +
+        "No se creó un duplicado."
+      : `<b>${kmTotal} km</b> recorridos<br>` +
+        `Odómetro actualizado: ${data.odometro_ok ? "✓" : "⚠ pendiente"}<br><br>` +
+        "Tu hoja de ruta quedó registrada en FlotaPro.";
     mostrar("screen-ok");
 
   } catch (e) {
